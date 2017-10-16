@@ -1,3 +1,6 @@
+from __future__ import division, unicode_literals, print_function, absolute_import
+from labscript_utils import PY2
+
 import sys
 import json
 import numpy as np
@@ -10,8 +13,9 @@ VALID_PROPERTY_LOCATIONS = {
     "unit_conversion_parameters"
     }
 
-if sys.version < '3':
+if PY2:
     STRING_DATATYPES = [str, np.string_, unicode]
+    str = unicode
 else:
     STRING_DATATYPES = [str, np.string_, bytes]
 
@@ -22,6 +26,7 @@ def serialise(value):
 
 
 def deserialise(value):
+    value = str(value)
     assert value.startswith(JSON_IDENTIFIER)
     return json.loads(value[len(JSON_IDENTIFIER):])
     # return json.loads(value.replace(JSON_IDENTIFIER, '', 1))
@@ -38,9 +43,9 @@ def set_device_properties(h5_file, device_name, properties):
             gp.attrs[key] = val
         except TypeError as e:
             # If type not supported by HDF5, store as JSON
-            if 'has no native HDF5 equivalent' in e.message:
+            if 'has no native HDF5 equivalent' in str(e):
                 json_string = serialise(val)
-                gp.attrs.create(key, json_string)
+                gp.attrs.create(key, json_string.encode())
             else:
                 raise
 
